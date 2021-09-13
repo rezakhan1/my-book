@@ -2,11 +2,14 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using my_book.Data;
+using my_book.Data.Service;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,9 +19,12 @@ namespace my_book
 {
     public class Startup
     {
+        public string ConnectionString { get; set; }
         public Startup(IConfiguration configuration)
         {
+           
             Configuration = configuration;
+            ConnectionString = configuration.GetConnectionString("defaultConnectionString");
         }
 
         public IConfiguration Configuration { get; }
@@ -28,6 +34,20 @@ namespace my_book
         {
 
             services.AddControllers();
+
+            //Configure DB Conntion
+            services.AddDbContext<AppDBContext>(options => options.UseSqlServer(ConnectionString));
+
+            //Configure service
+            services.AddTransient<BookService>();
+            services.AddTransient<AuthorService>();
+            services.AddTransient<PublisherService>();
+            services.AddApiVersioning(context=>
+            {
+                context.DefaultApiVersion = new ApiVersion(1, 0);
+                context.AssumeDefaultVersionWhenUnspecified = true;
+
+            });
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "my_book", Version = "v1" });
@@ -35,7 +55,7 @@ namespace my_book
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
@@ -49,6 +69,9 @@ namespace my_book
             app.UseRouting();
 
             app.UseAuthorization();
+            //Exception Handling
+          //  app.ConfigureBuildInExceptionHandler(loggerFactory);
+            //app.ConfigureCustomExceptionHandler();
 
             app.UseEndpoints(endpoints =>
             {

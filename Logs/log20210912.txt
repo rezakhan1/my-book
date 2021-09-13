@@ -1,0 +1,2 @@
+09/12/2021 17:36:18 +05:30 [Information] - Message: Logging to file
+09/12/2021 17:47:56 +05:30 [Information] - Message: Logging to file
